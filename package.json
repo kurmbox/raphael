@@ -3,6 +3,7 @@
   "name": "raphael",
   "description": "An npm package of raphael",
   "version": "1.4.7-14-gdbe241f",
+  "main": "raphael.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/marcuswestin/raphael.git"
