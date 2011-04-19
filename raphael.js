@@ -3721,5 +3721,9 @@
     R.el = elproto;
     R.st = Set[proto];
 
-    oldRaphael.was ? (win.Raphael = R) : (Raphael = R);
+	if (typeof module == 'undefined') {
+		oldRaphael.was ? (win.Raphael = R) : (Raphael = R);
+	} else {
+		module.exports = R
+	}
 })();
