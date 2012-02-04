@@ -13,6 +13,7 @@
 // │ Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) license. │ \\
 // └──────────────────────────────────────────────────────────────────────────────────────┘ \\
 
+var globHack = {};
 (function (glob) {
     var version = "0.4.0",
         has = "hasOwnProperty",
@@ -217,8 +218,9 @@
     eve.toString = function () {
         return "You are running Eve " + version;
     };
-    (typeof module != "undefined" && module.exports) ? (module.exports = eve) : (glob.eve = eve);
-})(this);
+    glob.eve = eve;
+})(globHack);
+var eve = globHack.eve;
 
 // ┌─────────────────────────────────────────────────────────────────────┐ \\
 // │ "Raphaël 2.0.1" - JavaScript Vector Library                         │ \\
@@ -229,7 +231,7 @@
 // └─────────────────────────────────────────────────────────────────────┘ \\
 (function () {
     
-    function R(first) {
+    var R = globHack.Raphael = module.exports = function(first) {
         if (R.is(first, "function")) {
             return loaded ? first() : eve.on("DOMload", first);
         } else if (R.is(first, array)) {
@@ -3367,7 +3369,6 @@
     })();
     
     R.ninja = function () {
-        oldRaphael.was ? (g.win.Raphael = oldRaphael.is) : delete Raphael;
         return R;
     };
     
@@ -3387,7 +3388,6 @@
         isLoaded();
     })(document, "DOMContentLoaded");
 
-    oldRaphael.was ? (g.win.Raphael = R) : (Raphael = R);
     
     eve.on("DOMload", function () {
         loaded = true;
@@ -3404,7 +3404,7 @@
 // │ Copyright (c) 2008-2011 Sencha Labs (http://sencha.com)             │ \\
 // │ Licensed under the MIT (http://raphaeljs.com/license.html) license. │ \\
 // └─────────────────────────────────────────────────────────────────────┘ \\
-window.Raphael.svg && function (R) {
+globHack.Raphael.svg && function (R) {
     var has = "hasOwnProperty",
         Str = String,
         toFloat = parseFloat,
@@ -4484,7 +4484,7 @@ window.Raphael.svg && function (R) {
             };
         })(method);
     }
-}(window.Raphael);
+}(globHack.Raphael);
 
 // ┌─────────────────────────────────────────────────────────────────────┐ \\
 // │ Raphaël - JavaScript Vector Library                                 │ \\
@@ -4495,7 +4495,7 @@ window.Raphael.svg && function (R) {
 // │ Copyright (c) 2008-2011 Sencha Labs (http://sencha.com)             │ \\
 // │ Licensed under the MIT (http://raphaeljs.com/license.html) license. │ \\
 // └─────────────────────────────────────────────────────────────────────┘ \\
-window.Raphael.vml && function (R) {
+globHack.Raphael.vml && function (R) {
     var has = "hasOwnProperty",
         Str = String,
         toFloat = parseFloat,
@@ -5464,4 +5464,4 @@ window.Raphael.vml && function (R) {
     } else {
         module.exports = R
     }
-}(window.Raphael);
+}(globHack.Raphael);
