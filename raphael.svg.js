@@ -227,8 +227,8 @@ window.Raphael.svg && function (R) {
                     });
                     use = $($("use"), {
                         "xlink:href": "#" + pathId,
-                        transform: (isEnd ? " rotate(180 " + w / 2 + " " + h / 2 + ") " : S) + "scale(" + w / t + "," + h / t + ")",
-                        "stroke-width": 1 / ((w / t + h / t) / 2)
+                        transform: (isEnd ? "rotate(180 " + w / 2 + " " + h / 2 + ") " : E) + "scale(" + w / t + "," + h / t + ")",
+                        "stroke-width": (1 / ((w / t + h / t) / 2)).toFixed(4)
                     });
                     marker.appendChild(use);
                     p.defs.appendChild(marker);
@@ -331,8 +331,8 @@ window.Raphael.svg && function (R) {
                             hl.appendChild(node);
                             pn = hl;
                         }
-                        if (att == "target" && value == "blank") {
-                            pn.setAttributeNS(xlink, "show", "new");
+                        if (att == "target") {
+                            pn.setAttributeNS(xlink, "show", value == "blank" ? "new" : value);
                         } else {
                             pn.setAttributeNS(xlink, att, value);
                         }
@@ -483,7 +483,6 @@ window.Raphael.svg && function (R) {
                                 });
                             })(el);
                             o.paper.defs.appendChild(el);
-                            node.style.fill = "url(#" + el.id + ")";
                             $(node, {fill: "url(#" + el.id + ")"});
                             o.pattern = el;
                             o.pattern && updatePosition(o);
@@ -696,6 +695,7 @@ window.Raphael.svg && function (R) {
      * Element.rotate
      [ method ]
      **
+     * Deprecated! Use @Element.transform instead.
      * Adds rotation by given angle around given point to the list of
      * transformations of the element.
      > Parameters
@@ -728,6 +728,7 @@ window.Raphael.svg && function (R) {
      * Element.scale
      [ method ]
      **
+     * Deprecated! Use @Element.transform instead.
      * Adds scale by given amount relative to given point to the list of
      * transformations of the element.
      > Parameters
@@ -763,6 +764,7 @@ window.Raphael.svg && function (R) {
      * Element.translate
      [ method ]
      **
+     * Deprecated! Use @Element.transform instead.
      * Adds translation by given amount to the list of transformations of the element.
      > Parameters
      - dx (number) horisontal shift
@@ -866,17 +868,21 @@ window.Raphael.svg && function (R) {
      * Removes element form the paper.
     \*/
     elproto.remove = function () {
-        if (this.removed) {
+        if (this.removed || !this.node.parentNode) {
             return;
         }
         var paper = this.paper;
         paper.__set__ && paper.__set__.exclude(this);
-        eve.unbind("*.*." + this.id);
+        eve.unbind("raphael.*.*." + this.id);
         if (this.gradient) {
             paper.defs.removeChild(this.gradient);
         }
         R._tear(this, paper);
-        this.node.parentNode.removeChild(this.node);
+        if (this.node.parentNode.tagName.toLowerCase() == "a") {
+            this.node.parentNode.parentNode.removeChild(this.node.parentNode);
+        } else {
+            this.node.parentNode.removeChild(this.node);
+        }
         for (var i in this) {
             this[i] = typeof this[i] == "function" ? R._removedFactory(i) : null;
         }
@@ -1027,7 +1033,7 @@ window.Raphael.svg && function (R) {
             params = name;
         }
         for (var key in params) {
-            eve("attr." + key + "." + this.id, this, params[key]);
+            eve("raphael.attr." + key + "." + this.id, this, params[key]);
         }
         for (key in this.paper.customAttributes) if (this.paper.customAttributes[has](key) && params[has](key) && R.is(this.paper.customAttributes[key], "function")) {
             var par = this.paper.customAttributes[key].apply(this, [].concat(params[key]));
@@ -1177,7 +1183,6 @@ window.Raphael.svg && function (R) {
     };
     R._engine.text = function (svg, x, y, text) {
         var el = $("text");
-        // $(el, {x: x, y: y, "text-anchor": "middle"});
         svg.canvas && svg.canvas.appendChild(el);
         var res = new Element(el, svg);
         res.attrs = {
@@ -1242,7 +1247,6 @@ window.Raphael.svg && function (R) {
         container.width = width;
         container.height = height;
         container.canvas = cnvs;
-        // plugins.call(container, container, R.fn);
         container.clear();
         container._left = container._top = 0;
         isFloating && (container.renderfix = function () {});
@@ -1250,7 +1254,7 @@ window.Raphael.svg && function (R) {
         return container;
     };
     R._engine.setViewBox = function (x, y, w, h, fit) {
-        eve("setViewBox", this, this._viewBox, [x, y, w, h, fit]);
+        eve("raphael.setViewBox", this, this._viewBox, [x, y, w, h, fit]);
         var size = mmax(w / this.width, h / this.height),
             top = this.top,
             aspectRatio = fit ? "meet" : "xMinYMin",
@@ -1293,8 +1297,13 @@ window.Raphael.svg && function (R) {
     R.prototype.renderfix = function () {
         var cnvs = this.canvas,
             s = cnvs.style,
-            pos = cnvs.getScreenCTM() || cnvs.createSVGMatrix(),
-            left = -pos.e % 1,
+            pos;
+        try {
+            pos = cnvs.getScreenCTM() || cnvs.createSVGMatrix();
+        } catch (e) {
+            pos = cnvs.createSVGMatrix();
+        }
+        var left = -pos.e % 1,
             top = -pos.f % 1;
         if (left || top) {
             if (left) {
@@ -1314,7 +1323,7 @@ window.Raphael.svg && function (R) {
      * Clears the paper, i.e. removes all the elements.
     \*/
     R.prototype.clear = function () {
-        R.eve("clear", this);
+        R.eve("raphael.clear", this);
         var c = this.canvas;
         while (c.firstChild) {
             c.removeChild(c.firstChild);
@@ -1331,7 +1340,7 @@ window.Raphael.svg && function (R) {
      * Removes the paper from the DOM.
     \*/
     R.prototype.remove = function () {
-        eve("remove", this);
+        eve("raphael.remove", this);
         this.canvas.parentNode && this.canvas.parentNode.removeChild(this.canvas);
         for (var i in this) {
             this[i] = typeof this[i] == "function" ? R._removedFactory(i) : null;
